@@ -9,3 +9,4 @@ einops
 Pillow
 requests
 cloudpickle
+scikit-learn

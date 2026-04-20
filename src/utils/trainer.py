@@ -9,27 +9,6 @@ import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-## Accuracy 
-def success_rate(model, test_data):
-    model.eval()
-    correct = 0
-    total = 0
-
-    dataloader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False)
-
-    with torch.no_grad():
-        for x, y in dataloader:
-            # send data to same device as model
-            x = x.to(device)
-            y = y.to(device)
-
-            y_pred = torch.argmax(model(x), dim=1)
-            if (y_pred == y).item():
-                correct += 1
-            total += 1
-
-    return correct / total if total > 0 else 0.0
-
 ### Training 
 
 def trainer(dataset, model, optimizer, loss_fn, epochs=10, batch_size=1, rate=1e-4, run_name="default_run"):
