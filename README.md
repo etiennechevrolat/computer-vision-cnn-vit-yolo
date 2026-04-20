@@ -1,245 +1,138 @@
-# Computer Vision: CNN, ViT & YOLO
+# Computer Vision: CNN & Vision Transformer (ViT)
 
-Une implémentation complète d'architectures de vision par ordinateur pour la classification d'images, incluant **CNNs personnalisés**, **Vision Transformers** et préparation pour **YOLO**.
-
-## 📋 Vue d'ensemble
-
-Ce projet explore et compare différentes architectures de deep learning pour la vision par ordinateur :
-
-- **CNN (Convolutional Neural Networks)** - 6 architectures classiques et modernes
-- **ViT (Vision Transformers)** - Architecture Transformer pour vision (en développement)
-- **YOLO** - Préparation pour détection d'objets (en développement)
-
-### Modèles CNN implémentés
-
-| Modèle | Couches Conv | Filtres max | Dropout | Use Case |
-|--------|--------------|-------------|---------|----------|
-| **CNN1** | 3 | 16 | ❌ | Baseline simple |
-| **CNN2** | 3 | 8 | ❌ | Étude de la profondeur |
-| **CNN3** | 3 | 8 | ❌ | Petits filtres (3×3) |
-| **CNN4** | 1 | 4 | ❌ | Modèle minimaliste |
-| **LeNet** | 2 | 16 | ❌ | Classique (1998) |
-| **mycnn (cnnTD3)** | 3 | 192 | ✅ | Moderne avec régularisation |
-
-## 🚀 Démarrage rapide
-
-### Prérequis
-
-- Python 3.8+
-- PyTorch 2.0+
-- GPU recommandé (CPU supporté)
-
-### Installation
-
-```bash
-# Cloner le repository
-git clone https://github.com/etiennechevrolat/computer-vision-cnn-vit-yolo.git
-cd computer-vision-cnn-vit-yolo
-
-# Créer un environnement virtuel (optionnel mais recommandé)
-python -m venv venv
-source venv/bin/activate  # macOS/Linux
-# ou
-venv\Scripts\activate  # Windows
-
-# Installer les dépendances
-pip install -r requirements.txt
-```
-
-### Utilisation basique
-
-```bash
-# Lancer l'entraînement
-python main.py
-
-# Visualiser les métriques avec TensorBoard
-tensorboard --logdir=./logs
-# Accédez à http://localhost:6006
-```
-
-## 📁 Structure du projet
-
-```
-computer-vision-cnn-vit-yolo/
-├── main.py                 # Point d'entrée principal
-├── requirements.txt        # Dépendances Python
-├── README.md              # Cette documentation
-│
-├── src/                   # Code source
-│   ├── cnn/
-│   │   ├── models.py      # Définitions des modèles CNN
-│   │   └── __pycache__/
-│   │
-│   ├── utils/
-│   │   ├── trainer.py     # Boucle d'entraînement & évaluation
-│   │   └── __pycache__/
-│   │
-│   ├── vit/               # Vision Transformers (en développement)
-│   ├── vlm/               # Vision Language Models (en développement)
-│   └── data/              # Utilitaires de données
-│
-├── data/                  # Datasets
-│   └── MNIST/
-│       └── raw/           # Données brutes téléchargées
-│
-├── logs/                  # TensorBoard logs
-│   └── mycnn/             # Logs d'entraînement par modèle
-│
-└── notebooks/
-    └── pres.ipynb         # Notebooks d'exploration
-```
-
-## ⚙️ Configuration
-
-Modifiez `main.py` pour ajuster les hyperparamètres :
-
-```python
-# Hyperparamètres d'entraînement
-epochs = 100           # Nombre d'epochs
-batch_size = 128       # Taille des batches
-lr = 1e-3              # Learning rate
-MODEL_NAME = "mycnn"   # Modèle à utiliser
-
-# Choisir le modèle
-model = mycnn().to(device)  # Autres options : CNN1, CNN2, CNN3, CNN4, LeNet
-
-# Sélectionner le dataset
-# Options : MNIST, CIFAR10, CIFAR100
-train_data = datasets.CIFAR10(root="./data", train=True, download=True, ...)
-```
-
-## 📊 Suivi de l'entraînement
-
-### TensorBoard
-
-Les métriques d'entraînement sont enregistrées en temps réel :
-
-```bash
-tensorboard --logdir=./logs
-```
-
-**Métriques disponibles :**
-- Loss/train - Perte d'entraînement par batch
-- Logs sauvegardés dans `logs/{MODEL_NAME}/`
-
-### Structure des logs
-
-```
-logs/
-├── mycnn/
-│   ├── events.out.tfevents...
-│   └── ...autres fichiers TensorBoard
-└── autre_modele/
-```
-
-## 🔧 Détails techniques
-
-### Dépendances principales
-
-- **torch** (≥2.0) - Framework deep learning
-- **torchvision** (≥0.15) - Datasets et transformations d'images
-- **tensorboard** - Visualisation des métriques
-- **tqdm** - Barres de progression
-- **timm** (≥0.9) - Vision models pré-entraînés
-- **einops** - Opérations tenseur flexibles
-
-### Architectures CNN détaillées
-
-#### mycnn (Recommended)
-- 3 couches convolutives avec dropout
-- Filtres progressifs : 32 → 64 → 192
-- Dropout 2D dans les couches conv (0.2)
-- Dropout FC dans les couches denses (0.2)
-- Parfait pour CIFAR-10
-
-#### LeNet (Classique)
-- Architecture LeNet-5 originale (1998)
-- 2 couches convolutives + 3 FC
-- Baseline pour comparaisons historiques
-
-#### CNN1-4
-- Variations pour études d'architecture
-- CNN1 : Baseline avec 16 filtres
-- CNN2 : Étude de la profondeur (8 filtres)
-- CNN3 : Petits filtres 3×3
-- CNN4 : Une seule couche convolutive
-
-## 🎯 Utilisation avancée
-
-### Entraîner un modèle spécifique
-
-```python
-# main.py
-from cnn.models import CNN3, LeNet
-
-model = CNN3().to(device)  # Ou LeNet, CNN1, etc.
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-loss_fn = torch.nn.CrossEntropyLoss()
-
-trainer(
-    train_data, 
-    model, 
-    optimizer, 
-    loss_fn, 
-    epochs=50,
-    batch_size=64,
-    run_name="CNN3_experiment"
-)
-
-# Évaluer le modèle
-accuracy = success_rate(model, test_data)
-print(f"Accuracy: {accuracy:.2%}")
-```
-
-### Sauvegarder et charger un modèle
-
-```python
-# Sauvegarder
-torch.save(model.state_dict(), 'models/mycnn.pth')
-
-# Charger
-model = mycnn()
-model.load_state_dict(torch.load('models/mycnn.pth'))
-model.eval()
-```
-
-## 📈 Résultats attendus
-
-Sur **CIFAR-10** avec 100 epochs :
-- mycnn : ~85-90% accuracy
-- LeNet : ~70-75% accuracy
-- CNN3 : ~75-80% accuracy
-
-*Les résultats varient selon les hyperparamètres et l'initialisation*
-
-## 🚧 Développement futur
-
-- [ ] Vision Transformers (ViT) - Implémentation complète
-- [ ] Vision Language Models (VLM) - Modèles multimodaux
-- [ ] YOLO v8 - Détection d'objets
-- [ ] Augmentation de données avancée
-- [ ] Transfer learning avec modèles pré-entraînés
-- [ ] Évaluation et comparaison des architectures
-- [ ] Support multi-GPU
-
-## 🤝 Contribution
-
-Les contributions sont bienvenues ! Vous pouvez :
-- Ajouter de nouveaux modèles
-- Optimiser les hyperparamètres
-- Améliorer la documentation
-- Rapporter des bugs
-
-## 📝 License
-
-Ce projet est fourni à titre éducatif.
-
-## 📧 Contact
-
-Pour des questions ou suggestions : etiennechevrolat@example.com
+This project implements and compares deep learning architectures for image classification, focusing on **Convolutional Neural Networks (CNNs)** and a **Vision Transformer (ViT)** trained from scratch on CIFAR-10.
 
 ---
 
-**Dernière mise à jour :** Avril 2026  
-**Version :** 1.0.0  
-**Status :** Actif - En développement
+## 📋 Overview
+
+The goal of this project is to study and compare different architectural choices in computer vision:
+
+- **CNNs (Convolutional Neural Networks)**: multiple handcrafted architectures with varying depth, kernel sizes, and capacities
+- **Vision Transformer (ViT)**: a transformer-based model adapted for image classification using patch embeddings and self-attention
+
+All models are evaluated on the **CIFAR-10 dataset (60,000 images, 10 classes)**.
+
+---
+
+## 🧠 Models
+
+### CNN architectures
+
+Six CNN variants were implemented to study the impact of architectural design choices:
+
+| Model | Description | Parameters |
+|------|------------|-----------|
+| CNN1 | Simple baseline CNN | ~14K |
+| CNN2 | Reduced channel capacity | ~6K |
+| CNN3 | Small filters (3×3) | ~5K |
+| CNN4 | Single conv layer + FC | ~41K |
+| LeNet | Classical CNN (1998) | ~83K |
+| MyCNN | Deep CNN with skip connections and dropout | ~1.16M |
+
+Key observations:
+- Increasing depth and channel width significantly increases model capacity
+- Fully connected layers dominate parameter count in shallow models
+- MyCNN provides the strongest CNN baseline due to higher representational power
+
+---
+
+### Vision Transformer (ViT)
+
+A Vision Transformer was implemented from scratch with the following configuration:
+
+- Patch size: 4
+- Image size: 32×32
+- Hidden dimension: 128
+- Attention heads: 8
+- Transformer layers: 12
+- Dropout: 0.1
+
+Total parameters: ~2.26M
+
+The ViT uses:
+- Patch embedding via convolution
+- Learnable positional encoding
+- Multi-head self-attention blocks
+- A classification token ([CLS])
+
+---
+
+## ⚙️ Training setup
+
+All models were trained under comparable conditions:
+
+- Optimizer: Adam (CNNs), AdamW (ViT)
+- Batch size: 64
+- Learning rate:
+  - CNNs: 1e-3
+  - ViT: 3e-4
+- Dataset: CIFAR-10
+- Loss: CrossEntropyLoss
+
+ViT was trained for more epochs due to slower convergence behavior.
+
+---
+
+## 📊 Results summary
+
+| Model | Behavior | Performance |
+|------|---------|-------------|
+| CNNs | Fast convergence, stable training | Higher accuracy overall |
+| ViT | Slower convergence, more unstable early training | ~74% test accuracy |
+
+---
+
+## 🔍 Key findings
+
+CNNs outperform the Vision Transformer in this setup for several reasons:
+
+### 1. Dataset size limitation
+CIFAR-10 is relatively small for transformer-based architectures. ViTs typically require large-scale datasets to learn meaningful attention patterns effectively.
+
+---
+
+### 2. Inductive bias
+CNNs benefit from strong built-in assumptions:
+- Local spatial structure
+- Translation invariance
+
+ViTs lack these priors and must learn them from data, making them less efficient in low-data regimes.
+
+---
+
+### 3. Optimization sensitivity
+ViTs are more sensitive to:
+- learning rate choice
+- number of training epochs
+- regularization strategy
+
+In this project, both architectures were trained from scratch under similar constraints, which favored CNNs.
+
+---
+
+### 4. Data efficiency
+CNNs are significantly more data-efficient, while ViTs require more data or pretraining to reach optimal performance.
+
+---
+
+## 📈 Conclusion
+
+This project highlights the trade-off between CNNs and Vision Transformers:
+
+- CNNs are efficient, stable, and well-suited for small to medium datasets
+- ViTs are more expressive but require larger datasets and more careful training
+
+Although the ViT has a significantly higher number of parameters (~2.26M), it does not outperform CNNs on CIFAR-10 under identical training conditions due to data limitations and optimization constraints.
+
+---
+
+## 🚀 Future work
+
+- Pretraining ViT on larger datasets (e.g. ImageNet)
+- Hybrid CNN-Transformer architectures
+- Improved regularization techniques for ViT
+- Extending experiments to larger datasets (CIFAR-100, ImageNet subsets)
+- Adding formal benchmarking (FLOPs, inference time, latency)
+
+---
