@@ -1,35 +1,30 @@
 import sys
 import os
+from pathlib import Path
+import torch
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
 
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
-from torchvision import datasets, transforms, models 
-from cnn.models import CNN1, CNN2, CNN3, CNN4, LeNet, mycnn
-from vit.utils_vit.vision_transformer import ViT
-from vit.utils_vit.trainer_vit import vit_trainer
-from cnn.utils.trainer_cnn import trainer
-from cnn.utils.metrics import evaluate_model
-import torch  
+from src.cnn.models import CNN1, CNN2, CNN3, CNN4, LeNet, mycnn
+from src.vit.utils_vit.vision_transformer import ViT
+from src.vit.utils_vit.trainer_vit import vit_trainer, evaluate_vit 
+from src.cnn.utils.trainer_cnn import trainer
+from src.cnn.utils.metrics import evaluate_model
 
-# --- PARAMÈTRES ---
+#HYPERPARAMETERS
 training = True
-
+VIT = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-epochs = 50
+epochs = 100
 batch_size = 64
 lr = 1e-3
 
-#modèles
-MODELS_CONFIG = {
-    "mycnn": mycnn,
-    "lenet": LeNet,
-    "cnn1": CNN1,
-    "cnn2": CNN2,
-    "cnn3": CNN3,
-    "cnn4": CNN4,
-    "vit": ViT
-}
-MODEL_NAME = "vit"
-# datasets
+
+#Datasets
 train_transforms = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomCrop(32, padding=4),
@@ -43,29 +38,50 @@ test_transforms = transforms.Compose([
 ])
 
 train_data = datasets.CIFAR10(root="./data", train=True, download=True, transform=train_transforms)
-test_data = datasets.CIFAR10(root="./data", train=False, download=True, transform=test_transforms)  
+test_data = datasets.CIFAR10(root="./data", train=False, download=True, transform=test_transforms)
 
-# Instanciation dynamique
-model = MODELS_CONFIG[MODEL_NAME]().to(device)
-if MODEL_NAME != "vit":
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-loss_fn = torch.nn.CrossEntropyLoss()
+train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
+#cnn models 
+CNN_MODELS_CONFIG = {
+    "mycnn": mycnn,
+    "lenet": LeNet,
+    "cnn1": CNN1,
+    "cnn2": CNN2,
+    "cnn3": CNN3,
+    "cnn4": CNN4,
+}
+MODEL_NAME = "mycnn"
+
+model = ViT(img_size=32, patch_size=4, hidden_dim=128, n_heads=8, n_layers=12, dropout_rate=0.1).to(device) if VIT else CNN_MODELS_CONFIG[MODEL_NAME]().to(device)
+
+# training
 if training:
-    if MODEL_NAME == "vit":
-        # On utilise ton trainer spécifique ViT
-        vit_trainer(train_data, test_data, model, epochs=20, batch_size=64, lr=3e-4, weight_decay=1e-2, run_name=MODEL_NAME)
-    else:
+    if VIT : 
+        vit_trainer(train_data, test_data, model, epochs=epochs, batch_size=batch_size, lr=3e-4, weight_decay=1e-2, run_name="ViT_CIFAR10")
+    else:   
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        loss_fn = torch.nn.CrossEntropyLoss()
         trainer(train_data, model, optimizer, loss_fn, epochs=epochs, batch_size=batch_size, rate=lr, run_name=MODEL_NAME)
-if MODEL_NAME == "vit":
-    # On utilise ton trainer spécifique ViT
-    evaluate_vit(model, head, test_loader, device)
+
+#eval 
+if VIT:
+    evaluate_vit(model, test_loader, device)
 else:
     evaluate_model(model, test_data, batch_size=batch_size)
 
-save_dir = "data/models"
-os.makedirs(save_dir, exist_ok=True)
-save_path = os.path.join(save_dir, f"{MODEL_NAME}.pth")
+#saving
+if VIT:
+    save_dir = Path("data/models")
+    save_dir.mkdir(parents=True, exist_ok=True)
+    save_path = save_dir / f"vit1.pth"
+    torch.save(model.state_dict(), save_path)
+    print(f"Modèle ViT1 sauvegardé sous {save_path}")
+else: 
+    save_dir = Path("data/models")
+    save_dir.mkdir(parents=True, exist_ok=True)
+    save_path = save_dir / f"{MODEL_NAME}.pth"
 
-torch.save(model.state_dict(), save_path)
-print(f"Modèle {MODEL_NAME} sauvegardé sous {save_path}")
+    torch.save(model.state_dict(), save_path)
+    print(f"Modèle {MODEL_NAME} sauvegardé sous {save_path}")
