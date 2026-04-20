@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+
 
 from torchvision import datasets, transforms, models 
 from cnn.models import CNN1, CNN2, CNN3, CNN4, LeNet, mycnn
