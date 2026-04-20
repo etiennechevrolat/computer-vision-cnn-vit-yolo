@@ -15,7 +15,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def trainer(dataset, model, optimizer, loss_fn, epochs=10, batch_size=1, rate=1e-4, run_name="default_run"):
 	model.train()
 	dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
-	log_dir = os.path.join(os.path.dirname(__file__), "../../logs", run_name)
+	log_dir = os.path.join(os.path.dirname(__file__), "../../logs/mycnn", run_name)
 	writer = SummaryWriter(log_dir=log_dir)
 
 	for epoch in range(epochs):
