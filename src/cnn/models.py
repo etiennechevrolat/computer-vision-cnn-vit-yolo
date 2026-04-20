@@ -116,6 +116,7 @@ class CNN4(nn.Module):
         
         ### LeNet 
 
+### Classic model : LeNet
 class LeNet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -146,8 +147,7 @@ class LeNet(nn.Module):
 
 ### MyCNN 
 
-class cnnTD3(nn.Module):
-
+class mycnn(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=5, padding=2)

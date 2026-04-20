@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from cnn.models import CNN1, CNN2, CNN3, CNN4, LeNet, cnnTD3
-from .trainer import trainer
-
+from cnn.models import CNN1, CNN2, CNN3, CNN4, LeNet, mycnn
+from torch.utils.tensorboard import SummaryWriter
+import os
+import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -29,76 +30,27 @@ def success_rate(model, test_data):
 
     return correct / total if total > 0 else 0.0
 
+### Training 
 
-### Training of my CNN
+def trainer(dataset, model, optimizer, loss_fn, epochs=10, batch_size=1, rate=1e-4, run_name="default_run"):
+	model.train()
+	dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+	log_dir = os.path.join(os.path.dirname(__file__), "../../logs", run_name)
+	writer = SummaryWriter(log_dir=log_dir)
+	
+	for epoch in range(epochs):
+		progress_bar = tqdm.tqdm(dataloader, desc=f"Epoch {epoch+1}/{epochs}", leave=True)
+		for x, y in progress_bar:
+			optimizer.zero_grad()
+			# envoyer les données sur le bon device
+			x = x.to(device)
+			y = y.to(device)
 
-import cloudpickle as pickle   
-def torch_saver(net, file="temp"):
-    with open(file, 'wb') as f:
-        pickle.dump(net, f)
-        
-def train_my_cnn():
-    model = cnnTD3().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    trainer(training_data, model, optimizer, nn.CrossEntropyLoss(), epochs=10, batch_size=128, run_name="my_cnn_fashionmnist")
-    print(f"Success rate of my CNN : {success_rate(model, test_data)}")
-    torch_saver(model, file="my_cnn_fashionmnist.pkl")
-
-
-
-### Script for training and testing the models all at once with the same hyperparameters
-
-training = False
-
-
-
-##HYPERPARAMETERS
-epochs = 100
-batch_size = 128
-lr = 1e-3
-
-def main():
-
-    ### CNN1
-    if training :
-        model1 = CNN1().to(device)
-        optimizer1 = torch.optim.Adam(model1.parameters(), lr=lr)
-        trainer(training_data, model1, optimizer1, nn.CrossEntropyLoss(), epochs=epochs, batch_size=batch_size, run_name="cnn1_fashionMNIST")
-        print(f"Success rate of CNN1 : {success_rate(model1, test_data)}")
-    
-    ## Influence of the size of the filters 
-    
-    ### CNN2 - filters of half the depth
-    if training :
-        model2 = CNN2().to(device)
-        optimizer2 = torch.optim.Adam(model2.parameters(), lr=lr)
-        trainer(training_data, model2, optimizer2, nn.CrossEntropyLoss(), epochs=epochs, batch_size=batch_size, run_name="cnn2_fashionmnist")
-        print(f"Success rate of CNN2 : {success_rate(model2, test_data)}")
-
-    ### CNN3 - kernels of smaller size : 3x3 instead of 5x5
-
-    if training :
-        model3 = CNN3().to(device)
-        optimizer3 = torch.optim.Adam(model3.parameters(), lr=lr)
-        trainer(training_data, model3, optimizer3, nn.CrossEntropyLoss(), epochs=epochs, batch_size=batch_size, run_name="cnn3_fashionmnist")
-        print(f"Success rate of CNN3 : {success_rate(model3, test_data)}")
-    
-    ## Influence of the depth of the network
-
-    ### CNN4 - only one convolutional layer
-    if training :
-        model4 = CNN4().to(device)
-        optimizer4 = torch.optim.Adam(model4.parameters(), lr=lr)
-        trainer(training_data, model4, optimizer4, nn.CrossEntropyLoss(), epochs=epochs, batch_size=batch_size, run_name="cnn4_fashionmnist")
-        print(f"Success rate of CNN4 : {success_rate(model4, test_data)}")
-
-    ## LeNet
-        if training :
-            model5 = LeNet().to(device)
-            optimizer5 = torch.optim.Adam(model5.parameters(), lr=lr)
-            trainer(training_data, model5, optimizer5, nn.CrossEntropyLoss(), epochs=epochs, batch_size=batch_size, run_name="cnn5_fashionmnist")
-            print(f"Success rate of CNN5 : {success_rate(model5, test_data)}")
-
-if __name__ == "__main__":
-    main()
+			y_pred = model(x)
+			loss = loss_fn(y_pred, y)
+			loss.backward()
+			optimizer.step()
+			progress_bar.set_postfix(loss=loss.item())
+			writer.add_scalar("Loss/train", loss.item(), epoch * len(dataloader) + progress_bar.n)
+	writer.close()
 
