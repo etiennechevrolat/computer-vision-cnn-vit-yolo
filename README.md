@@ -78,7 +78,7 @@ ViT was trained for more epochs due to slower convergence behavior.
 
 | Model | Behavior | Performance |
 |------|---------|-------------|
-| CNNs | Fast convergence, stable training | Higher accuracy overall |
+| CNNs | Fast convergence, stable training | ~80% test accuracy |
 | ViT | Slower convergence, more unstable early training | ~74% test accuracy |
 
 ---
